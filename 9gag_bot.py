@@ -40,9 +40,11 @@ def inline_posts_callback(bot, update):
     for post in posts:
         if post['type'] == 'video':
             result = InlineQueryResultMpeg4Gif(id=uuid.uuid4(), type='mpeg4_gif', mpeg4_url=post['url'],
+                                               mpeg4_width=post['width'], mpeg4_height=post['height'],
                                                title=post['title'], thumb_url=post['thumbnail_url'])
         elif post['type'] == 'image':
             result = InlineQueryResultPhoto(id=uuid.uuid4(), type='photo', photo_url=post['url'],
+                                            photo_width=post['width'], photo_height=post['height'],
                                             title=post['title'], thumb_url=post['thumbnail_url'])
 
         results.append(result)
@@ -74,19 +76,25 @@ def get_posts(keywords, cursor):
     media_urls = []
     for post in page_dict[u'data'][u'posts']:
         try:
-            url = post[u'images'][u'image460sv'][u'url']
+            media = post[u'images'][u'image460sv']
+            url = media[u'url']
             media_type = u'video'
         except KeyError:
             # Entry does not exist. Probably not a video. Probably an image.
-            url = post[u'images'][u'image460'][u'url']
+            media = post[u'images'][u'image460']
+            url = media[u'url']
             media_type = u'image'
         finally:
             title = post[u'title']
+            width = media[u'width']
+            height = media[u'height']
             thumbnail_url = post[u'images'][u'image460'][u'url']
 
             media_urls.append({
                 'title': title,
                 'type': media_type,
+                'width': width,
+                'height': height,
                 'url': url,
                 'thumbnail_url': thumbnail_url
             })
