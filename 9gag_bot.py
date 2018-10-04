@@ -4,7 +4,7 @@ import logging
 import json
 import sys
 from telegram.ext import Updater, CommandHandler, InlineQueryHandler
-from telegram import InlineQueryResultMpeg4Gif
+from telegram import InlineQueryResultMpeg4Gif, InlineQueryResultPhoto
 
 QUERY_URL = "https://9gag.com/v1/search-posts?"
 LOG_FILE = '/var/log/9gag_bot.log'
@@ -22,7 +22,7 @@ def error_callback(bot, update, error):
 
 
 # Callback function for when an inline query occurs
-def inline_gifs_callback(bot, update):
+def inline_posts_callback(bot, update):
     logging.info("Starting query.")
 
     logging.debug("Effective user ID: {}".format(update.effective_user.id))
@@ -33,13 +33,18 @@ def inline_gifs_callback(bot, update):
 
     # Retrieve GIFs on the basis of given keywords
     keywords = update.inline_query.query
-    posts, next_cursor = get_gifs(keywords, update.inline_query.offset)
+    posts, next_cursor = get_posts(keywords, update.inline_query.offset)
 
     # Convert the results to the appropriate InlineQueryResult object
     results = []
     for post in posts:
-        result = InlineQueryResultMpeg4Gif(id=uuid.uuid4(), type='mpeg4_gif', mpeg4_url=post['gif_url'],
-                                           title=post['title'], thumb_url=post['thumbnail_url'])
+        if post['type'] == 'video':
+            result = InlineQueryResultMpeg4Gif(id=uuid.uuid4(), type='mpeg4_gif', mpeg4_url=post['url'],
+                                               title=post['title'], thumb_url=post['thumbnail_url'])
+        elif post['type'] == 'image':
+            result = InlineQueryResultPhoto(id=uuid.uuid4(), type='photo', photo_url=post['url'],
+                                            title=post['title'], thumb_url=post['thumbnail_url'])
+
         results.append(result)
 
     # Let the bot answer with the results
@@ -47,7 +52,7 @@ def inline_gifs_callback(bot, update):
     bot.answer_inline_query(query_id, results=results, is_personal=True, next_offset=next_cursor)
 
 
-def get_gifs(keywords, cursor):
+def get_posts(keywords, cursor):
     # If the cursor is empty, it's the first page.
     if cursor == '':
         url_suffix = u'query={}&c={}'.format('%20'.join(keywords.split(' ')), 0)
@@ -65,24 +70,28 @@ def get_gifs(keywords, cursor):
     except Exception as e:
         return [], ''
 
-    # For all the posts retrieved, get the GIF/MP4 data
-    gif_urls = []
+    # For all the posts retrieved, get the media data
+    media_urls = []
     for post in page_dict[u'data'][u'posts']:
         try:
-            gif_url = post[u'images'][u'image460sv'][u'url']
+            url = post[u'images'][u'image460sv'][u'url']
+            media_type = u'video'
+        except KeyError:
+            # Entry does not exist. Probably not a video. Probably an image.
+            url = post[u'images'][u'image460'][u'url']
+            media_type = u'image'
+        finally:
             title = post[u'title']
             thumbnail_url = post[u'images'][u'image460'][u'url']
 
-            gif_urls.append({
+            media_urls.append({
                 'title': title,
-                'gif_url': gif_url,
+                'type': media_type,
+                'url': url,
                 'thumbnail_url': thumbnail_url
             })
-        except KeyError:
-            # Entry does not exist. Probably not a video.
-            pass
 
-    return gif_urls, next_cursor
+    return media_urls, next_cursor
 
 
 def get_page(url):
@@ -107,7 +116,7 @@ def main_loop(token):
     dispatcher.add_error_handler(error_callback)
 
     # Plug in the function that gets called when the user does an inline query
-    inline_query_handler = InlineQueryHandler(inline_gifs_callback)
+    inline_query_handler = InlineQueryHandler(inline_posts_callback)
     dispatcher.add_handler(inline_query_handler)
 
     # Start polling for queries
