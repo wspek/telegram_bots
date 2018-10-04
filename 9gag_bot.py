@@ -3,25 +3,29 @@ import uuid
 import logging
 import ujson
 import sys
-from telegram.ext import Updater, CommandHandler, InlineQueryHandler
 from telegram import InlineQueryResultMpeg4Gif, InlineQueryResultPhoto
+from telegram.ext import Updater, CommandHandler, InlineQueryHandler
+from telegram.ext.dispatcher import run_async
 
 QUERY_URL = "https://9gag.com/v1/search-posts?"
 LOG_FILE = '/var/log/9gag_bot.log'
 
 
 # Callback function for when a user sends the message '/start'
+@run_async
 def start_callback(bot, update):
     test = 0
     pass
 
 
 # Callback function for when a Telegram bot exception occurs
+@run_async
 def error_callback(bot, update, error):
     logging.error(error)
 
 
 # Callback function for when an inline query occurs
+@run_async
 def inline_posts_callback(bot, update):
     logging.info("Starting query.")
 
@@ -110,7 +114,7 @@ def get_page(url):
 
 
 def main_loop(token):
-    updater = Updater(token=token)
+    updater = Updater(token=token, workers=4)
     dispatcher = updater.dispatcher
 
     logging.basicConfig(filename=LOG_FILE,
