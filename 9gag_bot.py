@@ -1,7 +1,7 @@
 import requests
 import uuid
 import logging
-import json
+import ujson
 import sys
 from telegram.ext import Updater, CommandHandler, InlineQueryHandler
 from telegram import InlineQueryResultMpeg4Gif, InlineQueryResultPhoto
@@ -64,7 +64,7 @@ def get_posts(keywords, cursor):
     # Get page in JSON format
     url = QUERY_URL + url_suffix
     page_source = get_page(url)
-    page_dict = json.loads(page_source)
+    page_dict = ujson.loads(page_source)
 
     try:
         # This may fail if the query is empty (no keywords).
