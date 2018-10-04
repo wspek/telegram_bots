@@ -7,8 +7,8 @@ from telegram import InlineQueryResultMpeg4Gif, InlineQueryResultPhoto
 from telegram.ext import Updater, CommandHandler, InlineQueryHandler
 from telegram.ext.dispatcher import run_async
 
-QUERY_URL = "https://9gag.com/v1/search-posts?"
-LOG_FILE = '/var/log/9gag_bot.log'
+QUERY_URL = u"https://9gag.com/v1/search-posts?"
+LOG_FILE = u'/var/log/9gag_bot.log'
 
 
 # Callback function for when a user sends the message '/start'
@@ -27,13 +27,13 @@ def error_callback(bot, update, error):
 # Callback function for when an inline query occurs
 @run_async
 def inline_posts_callback(bot, update):
-    logging.info("Starting query.")
+    logging.info(u"Starting query.")
 
-    logging.debug("Effective user ID: {}".format(update.effective_user.id))
-    logging.debug("Query ID: {}".format(update.inline_query.id))
-    logging.debug("Update ID: {}".format(update.update_id))
-    logging.debug("Bot ID: {}".format(update.inline_query.bot.id))
-    logging.debug("Effective user ID: {}".format(update.effective_user.id))
+    logging.debug(u"Effective user ID: {}".format(update.effective_user.id))
+    logging.debug(u"Query ID: {}".format(update.inline_query.id))
+    logging.debug(u"Update ID: {}".format(update.update_id))
+    logging.debug(u"Bot ID: {}".format(update.inline_query.bot.id))
+    logging.debug(u"Effective user ID: {}".format(update.effective_user.id))
 
     # Retrieve GIFs on the basis of given keywords
     keywords = update.inline_query.query
@@ -42,14 +42,14 @@ def inline_posts_callback(bot, update):
     # Convert the results to the appropriate InlineQueryResult object
     results = []
     for post in posts:
-        if post['type'] == 'video':
-            result = InlineQueryResultMpeg4Gif(id=uuid.uuid4(), type='mpeg4_gif', mpeg4_url=post['url'],
-                                               mpeg4_width=post['width'], mpeg4_height=post['height'],
-                                               title=post['title'], thumb_url=post['thumbnail_url'])
-        elif post['type'] == 'image':
-            result = InlineQueryResultPhoto(id=uuid.uuid4(), type='photo', photo_url=post['url'],
-                                            photo_width=post['width'], photo_height=post['height'],
-                                            title=post['title'], thumb_url=post['thumbnail_url'])
+        if post[u'type'] == u'video':
+            result = InlineQueryResultMpeg4Gif(id=uuid.uuid4(), type=u'mpeg4_gif', mpeg4_url=post[u'url'],
+                                               mpeg4_width=post[u'width'], mpeg4_height=post[u'height'],
+                                               title=post[u'title'], thumb_url=post[u'thumbnail_url'])
+        elif post[u'type'] == u'image':
+            result = InlineQueryResultPhoto(id=uuid.uuid4(), type=u'photo', photo_url=post[u'url'],
+                                            photo_width=post[u'width'], photo_height=post[u'height'],
+                                            title=post[u'title'], thumb_url=post[u'thumbnail_url'])
 
         results.append(result)
 
@@ -61,9 +61,9 @@ def inline_posts_callback(bot, update):
 def get_posts(keywords, cursor):
     # If the cursor is empty, it's the first page.
     if cursor == '':
-        url_suffix = u'query={}&c={}'.format('%20'.join(keywords.split(' ')), 0)
+        url_suffix = u'query={}&c={}'.format(u'%20'.join(keywords.split(' ')), 0)
     else:
-        url_suffix = cursor.replace('amp;', '')
+        url_suffix = cursor.replace(u'amp;', u'')
 
     # Get page in JSON format
     url = QUERY_URL + url_suffix
@@ -95,12 +95,12 @@ def get_posts(keywords, cursor):
             thumbnail_url = post[u'images'][u'image460'][u'url']
 
             media_urls.append({
-                'title': title,
-                'type': media_type,
-                'width': width,
-                'height': height,
-                'url': url,
-                'thumbnail_url': thumbnail_url
+                u'title': title,
+                u'type': media_type,
+                u'width': width,
+                u'height': height,
+                u'url': url,
+                u'thumbnail_url': thumbnail_url
             })
 
     return media_urls, next_cursor
@@ -118,10 +118,10 @@ def main_loop(token):
     dispatcher = updater.dispatcher
 
     logging.basicConfig(filename=LOG_FILE,
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
+                        format=u'%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 
     # Plug in the function that gets called when the user enters /start
-    start_handler = CommandHandler('start', start_callback)
+    start_handler = CommandHandler(u'start', start_callback)
     dispatcher.add_handler(start_handler)
 
     # Plug in the function that gets called when an error occurs
@@ -135,5 +135,5 @@ def main_loop(token):
     updater.start_polling()
 
 
-if __name__ == '__main__':
+if __name__ == u'__main__':
     main_loop(sys.argv[1])
