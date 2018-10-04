@@ -69,7 +69,7 @@ def get_posts(keywords, cursor):
     try:
         # This may fail if the query is empty (no keywords).
         next_cursor = page_dict[u'data'][u'nextCursor']
-    except Exception as e:
+    except KeyError:
         return [], ''
 
     # For all the posts retrieved, get the media data
