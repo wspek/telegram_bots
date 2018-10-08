@@ -6,6 +6,7 @@ import sys
 from telegram import InlineQueryResultMpeg4Gif, InlineQueryResultPhoto
 from telegram.ext import Updater, CommandHandler, InlineQueryHandler
 from telegram.ext.dispatcher import run_async
+import messages
 
 QUERY_URL = u"https://9gag.com/v1/search-posts?"
 LOG_FILE = u'/var/log/9gag_bot.log'
@@ -14,8 +15,7 @@ LOG_FILE = u'/var/log/9gag_bot.log'
 # Callback function for when a user sends the message '/start'
 @run_async
 def start_callback(bot, update):
-    test = 0
-    pass
+    update.message.reply_text(messages.start_message)
 
 
 # Callback function for when a Telegram bot exception occurs
@@ -28,7 +28,6 @@ def error_callback(bot, update, error):
 @run_async
 def inline_posts_callback(bot, update):
     logging.info(u"Starting query.")
-
     logging.debug(u"Effective user ID: {}".format(update.effective_user.id))
     logging.debug(u"Query ID: {}".format(update.inline_query.id))
     logging.debug(u"Update ID: {}".format(update.update_id))
