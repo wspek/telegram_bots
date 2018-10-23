@@ -1,3 +1,10 @@
+"""9GAG Media Telegram Bot
+
+This Telegram bot can be used to query the 9GAG website for media, such as JPEGs, GIFs and MP4 videos.
+
+The bot can be added to Telegram by using the username '@gagmedia_bot'.
+"""
+
 import requests
 import uuid
 import logging
@@ -12,21 +19,40 @@ QUERY_URL = u"https://9gag.com/v1/search-posts?"
 LOG_FILE = u'/var/log/9gag_bot.log'
 
 
-# Callback function for when a user sends the message '/start'
 @run_async
 def start_callback(bot, update):
+    """Gets called automatically when a user sends the command '/start', after which the bot replies with a message.
+
+    Args:
+        bot: The bot that received the command.
+        update: The specific type of update that should be processed, which is a (start) command in this case.
+    """
+
     update.message.reply_text(messages.start_message)
 
 
-# Callback function for when a Telegram bot exception occurs
 @run_async
 def error_callback(bot, update, error):
+    """Gets called automatically when a Telegram bot error occurs, after which the error is logged.
+
+    Args:
+        bot: The bot that received the command.
+        update: The specific type of update that should be processed, which is an error in this case.
+        error: The error message describing the error which occurred.
+    """
+
     logging.error(error)
 
 
-# Callback function for when an inline query occurs
 @run_async
 def inline_posts_callback(bot, update):
+    """Gets called automatically when an inline query is performed.
+
+    Args:
+        bot: The bot that received the command.
+        update: The specific type of update that should be processed, which is a keyword query in this case.
+    """
+
     logging.info(u"Starting query.")
     logging.debug(u"Effective user ID: {}".format(update.effective_user.id))
     logging.debug(u"Query ID: {}".format(update.inline_query.id))
@@ -58,6 +84,19 @@ def inline_posts_callback(bot, update):
 
 
 def get_posts(keywords, cursor):
+    """Searches 9GAG for all media on the basis of the given keywords.
+
+    Args:
+        keywords (str): A string of keywords separated by spaces.
+        cursor (str): The cursor, which is essentially a string combining the keywords with a results page number in the
+            format 'query={keywords}&c={page_nr}'. The first time the function is called (page 0) the cursor will be the
+            empty string.
+
+    Returns:
+        A tuple containing two elements: a list of dictionaries representing the media and a string representing the
+        cursor necessary to retrieve the second page.
+    """
+
     # If the cursor is empty, it's the first page.
     if cursor == '':
         url_suffix = u'query={}&c={}'.format(u'%20'.join(keywords.split(' ')), 0)
@@ -106,6 +145,16 @@ def get_posts(keywords, cursor):
 
 
 def get_page(url):
+    """Retrieves a web page.
+
+    Args:
+        url (str): The web page URL.
+
+    Returns:
+        A string containing the web page content.
+
+    """
+
     response = requests.get(url)
     content = response.content
 
@@ -113,24 +162,35 @@ def get_page(url):
 
 
 def main_loop(token):
+    """Sets up the bot and starts the polling loop.
+
+    Args:
+        token: The bot's token given by the @BotFather.
+    """
+
+    # This class, which employs the telegram.ext.Dispatcher, provides a frontend to telegram.Bot to the programmer,
+    # so they can focus on coding the bot. Its purpose is to receive the updates from Telegram and to deliver them to
+    #  said dispatcher.
     updater = Updater(token=token, workers=4)
     dispatcher = updater.dispatcher
 
+    # Initialize logging
     logging.basicConfig(filename=LOG_FILE,
                         format=u'%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 
-    # Plug in the function that gets called when the user enters /start
+    # Plug in the function that gets called when the user enters /start. Commands are Telegram messages that start
+    # with /, optionally followed by an @ and the bot's name and/or some additional text.
     start_handler = CommandHandler(u'start', start_callback)
     dispatcher.add_handler(start_handler)
 
-    # Plug in the function that gets called when an error occurs
+    # Registers an error handler in the Dispatcher.
     dispatcher.add_error_handler(error_callback)
 
-    # Plug in the function that gets called when the user does an inline query
+    # Handler class to handle Telegram inline queries. Optionally based on a regex.
     inline_query_handler = InlineQueryHandler(inline_posts_callback)
     dispatcher.add_handler(inline_query_handler)
 
-    # Start polling for queries
+    # Starts polling updates from Telegram.
     updater.start_polling()
 
 
