@@ -53,16 +53,18 @@ def inline_posts_callback(bot, update):
         update: The specific type of update that should be processed, which is a keyword query in this case.
     """
 
-    logging.info(u"Starting query.")
-    logging.debug(u"Effective user ID: {}".format(update.effective_user.id))
-    logging.debug(u"Query ID: {}".format(update.inline_query.id))
-    logging.debug(u"Update ID: {}".format(update.update_id))
-    logging.debug(u"Bot ID: {}".format(update.inline_query.bot.id))
-    logging.debug(u"Effective user ID: {}".format(update.effective_user.id))
-
     # Retrieve GIFs on the basis of given keywords
     keywords = update.inline_query.query
     posts, next_cursor = get_posts(keywords, update.inline_query.offset)
+
+    message = u"Starting query | USER: {} | QRYID: {} | UPDID: {} | BOTID: {} | KEYWORDS: {} | NXTCSR: {}".format(
+        update.effective_user.id,
+        update.inline_query.id,
+        update.update_id,
+        update.inline_query.bot.id,
+        keywords,
+        next_cursor)
+    logging.info(message)
 
     # Convert the results to the appropriate InlineQueryResult object
     results = []
@@ -75,6 +77,9 @@ def inline_posts_callback(bot, update):
             result = InlineQueryResultPhoto(id=uuid.uuid4(), type=u'photo', photo_url=post[u'url'],
                                             photo_width=post[u'width'], photo_height=post[u'height'],
                                             title=post[u'title'], thumb_url=post[u'thumbnail_url'])
+        else:
+            result = None
+            logging.error(u"Encountered a post type of neither video or image ({})".format(post[u'type']))
 
         results.append(result)
 
